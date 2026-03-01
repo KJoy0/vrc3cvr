@@ -2495,6 +2495,7 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
             var contactSender = contactGameObject.AddComponent<ContactSender>();
             contactSender.senderContentType = ParseSenderContentType(collisionTag);
             contactSender.senderValue = 1f;
+            ApplyNakContactGeometry(contactSender, config.height == 0 || forceSphere ? VRC.Dynamics.ContactBase.ShapeType.Sphere : VRC.Dynamics.ContactBase.ShapeType.Capsule, config.radius, config.position, config.height, config.rotation);
         }
     }
 
@@ -2524,6 +2525,7 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
                 var contactSender = contactGameObject.AddComponent<ContactSender>();
                 contactSender.senderContentType = ParseSenderContentType(collisionTags.FirstOrDefault());
                 contactSender.senderValue = 1f;
+                ApplyNakContactGeometry(contactSender, sender);
                 remappedPaths.Add(ChilloutAvatarRelativePath(contactGameObject));
             }
             else
@@ -2540,6 +2542,7 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
                     var contactSender = contactGameObject.AddComponent<ContactSender>();
                     contactSender.senderContentType = ParseSenderContentType(collisionTag);
                     contactSender.senderValue = 1f;
+                    ApplyNakContactGeometry(contactSender, sender);
                     remappedPaths.Add(ChilloutAvatarRelativePath(contactGameObject));
                 }
             }
@@ -2563,6 +2566,7 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
             var contactReceiver = contactGameObject.AddComponent<ContactReceiver>();
             contactReceiver.receiverType = ParseReceiverType(receiver.receiverType);
             contactReceiver.receiverValue = receiver.paramValue;
+            ApplyNakContactGeometry(contactReceiver, receiver);
 
             var contactAnimator = contactGameObject.AddComponent<ContactAnimator>();
             contactAnimator.animator = chilloutAvatarGameObject.GetComponent<Animator>();
@@ -2794,6 +2798,47 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
             return parsed;
         }
         return ReceiverType.Constant;
+    }
+
+    static void ApplyNakContactGeometry(Component nakContact, VRC.Dynamics.ContactBase source)
+    {
+        ApplyNakContactGeometry(nakContact, source.shapeType, source.radius, source.position, source.height, source.rotation);
+    }
+
+    static void ApplyNakContactGeometry(Component nakContact, VRC.Dynamics.ContactBase.ShapeType shapeType, float radius, Vector3 position, float height, Quaternion rotation)
+    {
+        if (nakContact == null) return;
+
+        // Keep ContactBase serialized geometry in sync with generated colliders so size/scale
+        // matches the VRC contact source both in-editor and at runtime.
+        SetField(nakContact, "shapeType", shapeType.ToString());
+        SetField(nakContact, "radius", radius);
+        SetField(nakContact, "position", position);
+        SetField(nakContact, "height", height);
+        SetField(nakContact, "rotation", rotation);
+    }
+
+    static void SetField(Component target, string fieldName, object value)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        if (field == null) return;
+
+        if (field.FieldType.IsEnum)
+        {
+            if (value is string enumName)
+            {
+                if (Enum.TryParse(field.FieldType, enumName, true, out var parsed))
+                {
+                    field.SetValue(target, parsed);
+                }
+            }
+            return;
+        }
+
+        if (field.FieldType.IsInstanceOfType(value))
+        {
+            field.SetValue(target, value);
+        }
     }
 
     static string[] contactAxis = new string[] { "x", "y", "z", "w" };
