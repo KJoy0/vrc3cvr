@@ -2778,22 +2778,22 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
     }
 
 
-    static ContactSender.ContentType ParseSenderContentType(string collisionTag)
+    static ContentType ParseSenderContentType(string collisionTag)
     {
-        if (Enum.TryParse<ContactSender.ContentType>(collisionTag, true, out var parsed))
+        if (Enum.TryParse<ContentType>(collisionTag, true, out var parsed))
         {
             return parsed;
         }
-        return ContactSender.ContentType.World;
+        return ContentType.World;
     }
 
-    static ContactReceiver.ReceiverType ParseReceiverType(VRC.Dynamics.ContactReceiver.ReceiverType receiverType)
+    static ReceiverType ParseReceiverType(VRC.Dynamics.ContactReceiver.ReceiverType receiverType)
     {
-        if (Enum.TryParse<ContactReceiver.ReceiverType>(receiverType.ToString(), true, out var parsed))
+        if (Enum.TryParse<ReceiverType>(receiverType.ToString(), true, out var parsed))
         {
             return parsed;
         }
-        return ContactReceiver.ReceiverType.Constant;
+        return ReceiverType.Constant;
     }
 
     static string[] contactAxis = new string[] { "x", "y", "z", "w" };
