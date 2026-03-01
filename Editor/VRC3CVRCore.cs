@@ -13,6 +13,7 @@ using VRC.SDK3.Avatars.Components;
 using ABI.CCK.Components;
 using ABI.CCK.Scripts;
 using VRC.SDK3.Dynamics.Contact.Components;
+using NAK.Contacts;
 
 [Serializable]
 public class VRC3CVRCore : VRC3CVRConvertConfig
@@ -871,6 +872,7 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
         AdjustParameterNamesOnAnimator();
         AdjustParameterNamesOnAdvancedSettings();
         AdjustParameterNamesOnCVRAdvancedAvatarSettingsTrigger();
+        AdjustParameterNamesOnContactAnimator();
     }
 
     void AdjustParameterNamesOnAnimator()
@@ -1155,6 +1157,16 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
             {
                 RenameParameterNameIfNeeded(ref setting.settingName);
             }
+        }
+    }
+
+
+    void AdjustParameterNamesOnContactAnimator()
+    {
+        var animators = cvrAvatar.GetComponentsInChildren<ContactAnimator>();
+        foreach (var contactAnimator in animators)
+        {
+            RenameParameterNameIfNeeded(ref contactAnimator.parameter);
         }
     }
 
@@ -2480,8 +2492,10 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
                 config.height,
                 config.rotation
                 );
-            var cvrPointer = contactGameObject.AddComponent<CVRPointer>();
-            cvrPointer.type = collisionTag;
+            var contactSender = contactGameObject.AddComponent<ContactSender>();
+            contactSender.senderContentType = ParseSenderContentType(collisionTag);
+            contactSender.senderValue = 1f;
+            ApplyNakContactGeometry(contactSender, config.height == 0 || forceSphere ? VRC.Dynamics.ContactBase.ShapeType.Sphere : VRC.Dynamics.ContactBase.ShapeType.Capsule, config.radius, config.position, config.height, config.rotation);
         }
     }
 
@@ -2508,8 +2522,10 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
             if (collisionTags.Length == 1)
             {
                 var contactGameObject = SuitableContactObjectWithCollider(sender.gameObject, sender);
-                var cvrPointer = contactGameObject.AddComponent<CVRPointer>();
-                cvrPointer.type = collisionTags.FirstOrDefault();
+                var contactSender = contactGameObject.AddComponent<ContactSender>();
+                contactSender.senderContentType = ParseSenderContentType(collisionTags.FirstOrDefault());
+                contactSender.senderValue = 1f;
+                ApplyNakContactGeometry(contactSender, sender);
                 remappedPaths.Add(ChilloutAvatarRelativePath(contactGameObject));
             }
             else
@@ -2523,8 +2539,10 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
                     gameObject.transform.localRotation = Quaternion.identity;
                     gameObject.transform.localScale = Vector3.one;
                     var contactGameObject = SuitableContactObjectWithCollider(gameObject, sender);
-                    var cvrPointer = contactGameObject.AddComponent<CVRPointer>();
-                    cvrPointer.type = collisionTag;
+                    var contactSender = contactGameObject.AddComponent<ContactSender>();
+                    contactSender.senderContentType = ParseSenderContentType(collisionTag);
+                    contactSender.senderValue = 1f;
+                    ApplyNakContactGeometry(contactSender, sender);
                     remappedPaths.Add(ChilloutAvatarRelativePath(contactGameObject));
                 }
             }
@@ -2544,66 +2562,15 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
             {
                 continue;
             }
-            var collisionTagToCVRType = MakeCollisionTagToCVRType(receiver.gameObject);
             var contactGameObject = SuitableContactObjectWithCollider(receiver.gameObject, receiver);
-            var cvrTrigger = contactGameObject.AddComponent<CVRAdvancedAvatarSettingsTrigger>();
-            cvrTrigger.useAdvancedTrigger = true;
-            cvrTrigger.isLocalInteractable = receiver.allowSelf;
-            cvrTrigger.isNetworkInteractable = receiver.allowOthers;
-            cvrTrigger.allowedTypes = receiver.collisionTags.SelectMany(collisionTagToCVRType).Distinct().ToArray();
-            if (receiver.receiverType == VRC.Dynamics.ContactReceiver.ReceiverType.Constant)
-            {
-                var proxyParameter = ConstantContactProxiedParameterName(receiver.parameter);
-                constantContactProxiedParameters.Add(receiver.parameter);
-                // Count the number of pointers that are inside, so that if one is inside, it will be true
-                // see MakeProxyLayersOfConstantContactParameters
-                cvrTrigger.enterTasks.Add(new CVRAdvancedAvatarSettingsTriggerTask
-                {
-                    updateMethod = CVRAdvancedAvatarSettingsTriggerTask.UpdateMethod.Add,
-                    settingName = proxyParameter,
-                    settingValue = 1f,
-                    delay = 0f,
-                    holdTime = 0f,
-                });
-                cvrTrigger.exitTasks.Add(new CVRAdvancedAvatarSettingsTriggerTask
-                {
-                    updateMethod = CVRAdvancedAvatarSettingsTriggerTask.UpdateMethod.Subtract,
-                    settingName = proxyParameter,
-                    settingValue = 1f,
-                    delay = 0f,
-                    holdTime = 0f,
-                });
-            }
-            else if (receiver.receiverType == VRC.Dynamics.ContactReceiver.ReceiverType.OnEnter)
-            {
-                cvrTrigger.enterTasks.Add(new CVRAdvancedAvatarSettingsTriggerTask
-                {
-                    updateMethod = CVRAdvancedAvatarSettingsTriggerTask.UpdateMethod.Override,
-                    settingName = receiver.parameter,
-                    settingValue = 1f,
-                    delay = 0f,
-                    holdTime = 0f,
-                });
-                cvrTrigger.enterTasks.Add(new CVRAdvancedAvatarSettingsTriggerTask
-                {
-                    updateMethod = CVRAdvancedAvatarSettingsTriggerTask.UpdateMethod.Override,
-                    settingName = receiver.parameter,
-                    settingValue = 0f,
-                    delay = 1f / 60,
-                    holdTime = 0f,
-                });
-            }
-            else
-            {
-                cvrTrigger.stayTasks.Add(new CVRAdvancedAvatarSettingsTriggerTaskStay
-                {
-                    updateMethod = CVRAdvancedAvatarSettingsTriggerTaskStay.UpdateMethod.SetFromDistance,
-                    settingName = receiver.parameter,
-                    // caution: inversed!
-                    minValue = 1f,
-                    maxValue = 0f,
-                });
-            }
+            var contactReceiver = contactGameObject.AddComponent<ContactReceiver>();
+            contactReceiver.receiverType = ParseReceiverType(receiver.receiverType);
+            contactReceiver.receiverValue = receiver.paramValue;
+            ApplyNakContactGeometry(contactReceiver, receiver);
+
+            var contactAnimator = contactGameObject.AddComponent<ContactAnimator>();
+            contactAnimator.animator = chilloutAvatarGameObject.GetComponent<Animator>();
+            contactAnimator.parameter = receiver.parameter;
             var originalPath = ChilloutAvatarRelativePath(receiver);
             var remappedPath = ChilloutAvatarRelativePath(contactGameObject);
             if (receiver.IsLocalOnly)
@@ -2808,10 +2775,70 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
             new EditorCurveBinding
             {
                 path = binding.path,
-                type = binding.type == typeof(VRCContactReceiver) ? typeof(CVRAdvancedAvatarSettingsTrigger) : typeof(CVRPointer),
+                type = binding.type == typeof(VRCContactReceiver) ? typeof(ContactReceiver) : typeof(ContactSender),
                 propertyName = binding.propertyName,
             }
         };
+    }
+
+
+    static ContentType ParseSenderContentType(string collisionTag)
+    {
+        if (Enum.TryParse<ContentType>(collisionTag, true, out var parsed))
+        {
+            return parsed;
+        }
+        return ContentType.World;
+    }
+
+    static ReceiverType ParseReceiverType(VRC.Dynamics.ContactReceiver.ReceiverType receiverType)
+    {
+        if (Enum.TryParse<ReceiverType>(receiverType.ToString(), true, out var parsed))
+        {
+            return parsed;
+        }
+        return ReceiverType.Constant;
+    }
+
+    static void ApplyNakContactGeometry(Component nakContact, VRC.Dynamics.ContactBase source)
+    {
+        ApplyNakContactGeometry(nakContact, source.shapeType, source.radius, source.position, source.height, source.rotation);
+    }
+
+    static void ApplyNakContactGeometry(Component nakContact, VRC.Dynamics.ContactBase.ShapeType shapeType, float radius, Vector3 position, float height, Quaternion rotation)
+    {
+        if (nakContact == null) return;
+
+        // Keep ContactBase serialized geometry in sync with generated colliders so size/scale
+        // matches the VRC contact source both in-editor and at runtime.
+        SetField(nakContact, "shapeType", shapeType.ToString());
+        SetField(nakContact, "radius", radius);
+        SetField(nakContact, "position", position);
+        SetField(nakContact, "height", height);
+        SetField(nakContact, "rotation", rotation);
+    }
+
+    static void SetField(Component target, string fieldName, object value)
+    {
+        var field = target.GetType().GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        if (field == null) return;
+
+        if (field.FieldType.IsEnum)
+        {
+            if (value is string enumName)
+            {
+                if (Enum.TryParse(field.FieldType, enumName, true, out var parsed))
+                {
+                    field.SetValue(target, parsed);
+                }
+            }
+            return;
+        }
+
+        if (field.FieldType.IsInstanceOfType(value))
+        {
+            field.SetValue(target, value);
+        }
     }
 
     static string[] contactAxis = new string[] { "x", "y", "z", "w" };
