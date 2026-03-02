@@ -1,3 +1,8 @@
+## WIP
+
+- add optional PhysBone -> MagicaCloth2 conversion during avatar conversion (requires physbone2magica2)
+- add related UI toggle and documentation updates
+
 # 3.0.0-beta.10
 
 - Fixed an issue where per-path Collision Tag conversion settings did not function correctly in the component.

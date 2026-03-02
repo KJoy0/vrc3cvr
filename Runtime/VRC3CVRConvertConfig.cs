@@ -40,6 +40,7 @@ public class VRC3CVRConvertConfig
     public bool convertVrcHeadChops = true;
     public bool convertVrcSpatialAudioSources = true;
     public bool shouldDeleteVRCAvatarDescriptorAndPipelineManager = true;
+    public bool convertPhysBonesToMagicaCloth2 = false;
     public bool shouldDeletePhysBones = true;
 
     public void CopyFrom(VRC3CVRConvertConfig other)
@@ -69,6 +70,7 @@ public class VRC3CVRConvertConfig
         convertVrcHeadChops = other.convertVrcHeadChops;
         convertVrcSpatialAudioSources = other.convertVrcSpatialAudioSources;
         shouldDeleteVRCAvatarDescriptorAndPipelineManager = other.shouldDeleteVRCAvatarDescriptorAndPipelineManager;
+        convertPhysBonesToMagicaCloth2 = other.convertPhysBonesToMagicaCloth2;
         shouldDeletePhysBones = other.shouldDeletePhysBones;
     }
 }

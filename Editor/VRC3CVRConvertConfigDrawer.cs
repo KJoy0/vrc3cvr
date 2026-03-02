@@ -46,6 +46,8 @@ public class VRC3CVRConvertConfigDrawer : PropertyDrawer
         public static istring ConvertVrcSpatialAudioSources => new istring("Convert VRC Spatial Audio Sources", "VRC Spatial Audio Sourceを変換");
         public static istring ConvertVrcSpatialAudioSourcesDescription => new istring("The Audio Source 3D Sound Settings that are ignored in VRChat are adjusted heuristically (experimental).", "VRChatで無視されているAudio Sourceの3D Sound Settingsを雰囲気で補正します（試験的）。");
         public static istring DeleteVRCAvatarDescriptorAndPipelineManager => new istring("Delete VRC Avatar Descriptor and Pipeline Manager", "VRC Avatar DescriptorとPipeline Managerを削除");
+        public static istring ConvertPhysBonesToMagicaCloth2 => new istring("Convert PhysBones to MagicaCloth2 (requires physbone2magica2)", "PhysBonesをMagicaCloth2に変換（physbone2magica2が必要）");
+        public static istring ConvertPhysBonesToMagicaCloth2Description => new istring("Runs physbone2magica2 during conversion if the package is installed.", "パッケージが導入されている場合、変換時にphysbone2magica2を実行します。");
         public static istring DeletePhysBonesAndColliders => new istring("Delete PhysBones and colliders", "PhysBonesとコライダーを削除");
         public static istring DeleteContactsDescription => new istring("Always deletes contact receivers and senders", "VRC Contact ReceiverとSenderは常に削除されます");
     }
@@ -259,6 +261,7 @@ public class VRC3CVRConvertConfigDrawer : PropertyDrawer
             EditorGUI.indentLevel--;
 
             RenderLink("Physbone -> DynamicBone Tool?", "https://github.com/FACS01-01/PhysBone-to-DynamicBone");
+            RenderLink("Physbone -> MagicaCloth2 Tool?", "https://github.com/Narazaka/physbone2magica2");
 
             HeaderLabel(T.Menu);
 
@@ -278,6 +281,8 @@ public class VRC3CVRConvertConfigDrawer : PropertyDrawer
 
             Toggle(nameof(VRC3CVRConvertConfig.shouldDeleteVRCAvatarDescriptorAndPipelineManager), T.DeleteVRCAvatarDescriptorAndPipelineManager);
 
+            Toggle(nameof(VRC3CVRConvertConfig.convertPhysBonesToMagicaCloth2), T.ConvertPhysBonesToMagicaCloth2, T.ConvertPhysBonesToMagicaCloth2Description);
+
             Toggle(nameof(VRC3CVRConvertConfig.shouldDeletePhysBones), T.DeletePhysBonesAndColliders, T.DeleteContactsDescription);
 
             return position.y;
@@ -285,4 +290,3 @@ public class VRC3CVRConvertConfigDrawer : PropertyDrawer
     }
 }
 #endif
-

@@ -19,19 +19,21 @@ VRChat SDK3のアバターをChilloutVR用に変換します。
 [Releases](https://github.com/Narazaka/vrc3cvr/releases/latest)にアクセスし、「Assets」を展開して`.unitypackage`をダウンロードします。
 
 1. Unity 2022.3.22f1 / VRChat SDK 3.x（VCCを使用）でVRChatアバターをセットアップします。
-2. （任意）[PhysBone-to-DynamicBone](https://github.com/FACS01-01/PhysBone-to-DynamicBone)などを使用してPhysBonesをDynamicBonesに変換しておきます。
+2. （任意）[PhysBone-to-DynamicBone](https://github.com/FACS01-01/PhysBone-to-DynamicBone)や[physbone2magica2](https://github.com/Narazaka/physbone2magica2)などを使用してPhysBonesをDynamicBonesまたはMagicaCloth2に変換しておきます。
 3. [ChilloutVR CCK](https://docs.abinteractive.net/cck/setup/)をVRChatアバタープロジェクトにインポートします（Unityバージョンの不一致は無視してOK）。
 4. VRC3CVRの`.unitypackage`をインポートします。
 5. Tools -> VRC3CVR メニューでツールウインドウを出します。
 6. 変換したいVRCアバターを選択します。
     - Modular Avatarやその他のアバタービルドツールを使っている場合は、先に「ベイク」を行ってください（例：`Tools -> Modular Avatar -> Manual bake avatar`）。
-7. 「Convert」をクリックします。
+7. （任意）[physbone2magica2](https://github.com/Narazaka/physbone2magica2)導入時は **PhysBonesをMagicaCloth2に変換** をONにします。
+8. 「Convert」をクリックします。
 
-#### PhysBonesをDynamicBonesに変換するには？
+#### PhysBonesを事前変換するには？
 
 以下のツールを使ってください：
 
-- https://github.com/FACS01-01/PhysBone-to-DynamicBone
+- DynamicBone: https://github.com/FACS01-01/PhysBone-to-DynamicBone
+- MagicaCloth2: https://github.com/Narazaka/physbone2magica2
 
 変換するだけならばDynamicBonesを買う必要はありません。代替ツールがあります。
 
@@ -107,6 +109,7 @@ ChilloutVRのデフォルトUIでは非ASCII文字（日本語等）が文字化
 - VRC Contact SenderとReceiverをCVR ContactSenderとContactReceiverに変換
   - 変換されたReceiverのパラメーター駆動のためにContactAnimatorを追加します。
   - プレイ中のContactのShape Typeの変更は非対応です。
+- （任意）アバター変換中にPhysBone -> MagicaCloth2変換を実行（physbone2magica2導入時）
 
 ## ジェスチャーマッピング
 

@@ -166,6 +166,10 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
             InsertChilloutOverride();
 
             ConvertVrcComponents();
+            if (convertPhysBonesToMagicaCloth2)
+            {
+                ConvertPhysBonesToMagicaCloth2IfPossible();
+            }
             if (shouldDeleteVRCAvatarDescriptorAndPipelineManager)
             {
                 DeleteVrcComponents();
@@ -298,6 +302,83 @@ public class VRC3CVRCore : VRC3CVRConvertConfig
             audioSource.volume = onsp.Gain / 10f; // Gain ???
             EditorUtility.SetDirty(audioSource);
             UnityEngine.Object.DestroyImmediate(onsp);
+        }
+    }
+
+
+    void ConvertPhysBonesToMagicaCloth2IfPossible()
+    {
+        Debug.Log("Converting PhysBones to MagicaCloth2...");
+
+        var targetAvatar = chilloutAvatarGameObject;
+        var conversionMethods = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(assembly =>
+            {
+                Type[] types;
+                try
+                {
+                    types = assembly.GetTypes();
+                }
+                catch (ReflectionTypeLoadException ex)
+                {
+                    types = ex.Types.Where(t => t != null).ToArray();
+                }
+                catch
+                {
+                    return Enumerable.Empty<Type>();
+                }
+
+                return types;
+            })
+            .Where(type => type != null && type.FullName != null
+                && (type.FullName.IndexOf("physbone2magica2", StringComparison.OrdinalIgnoreCase) >= 0
+                    || (type.FullName.IndexOf("physbone", StringComparison.OrdinalIgnoreCase) >= 0
+                        && type.FullName.IndexOf("magica", StringComparison.OrdinalIgnoreCase) >= 0)))
+            .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static))
+            .Where(method => method.ReturnType == typeof(void)
+                && (method.GetParameters().Length == 0
+                    || (method.GetParameters().Length == 1
+                        && (method.GetParameters()[0].ParameterType == typeof(GameObject)
+                            || method.GetParameters()[0].ParameterType == typeof(Transform)
+                            || method.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(GameObject))))))
+            .Where(method =>
+            {
+                var methodText = $"{method.DeclaringType?.FullName}.{method.Name}";
+                return methodText.IndexOf("convert", StringComparison.OrdinalIgnoreCase) >= 0
+                    || methodText.IndexOf("apply", StringComparison.OrdinalIgnoreCase) >= 0
+                    || methodText.IndexOf("execute", StringComparison.OrdinalIgnoreCase) >= 0;
+            })
+            .ToList();
+
+        if (conversionMethods.Count == 0)
+        {
+            Debug.LogWarning("PhysBone->MagicaCloth2 conversion was requested, but no compatible conversion method was found. Please install physbone2magica2.");
+            return;
+        }
+
+        var success = false;
+        foreach (var method in conversionMethods)
+        {
+            try
+            {
+                var parameters = method.GetParameters();
+                var args = parameters.Length == 0
+                    ? new object[0]
+                    : new object[] { parameters[0].ParameterType == typeof(Transform) ? (object)targetAvatar.transform : targetAvatar };
+                method.Invoke(null, args);
+                Debug.Log($"Ran PhysBone->MagicaCloth2 converter method: {method.DeclaringType?.FullName}.{method.Name}");
+                success = true;
+                break;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to run converter method {method.DeclaringType?.FullName}.{method.Name}: {ex.Message}");
+            }
+        }
+
+        if (!success)
+        {
+            Debug.LogWarning("PhysBone->MagicaCloth2 conversion failed. Please verify physbone2magica2 is installed and up to date.");
         }
     }
 
