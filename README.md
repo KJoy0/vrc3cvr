@@ -21,17 +21,19 @@ Tested with:
 Go to [Releases](https://github.com/Narazaka/vrc3cvr/releases/latest) and expand "Assets" and download the `.unitypackage`.
 
 1. Setup your VRChat avatars with Unity 2022.3.22f1/VRChat SDK 3.x (use VCC)
-2. (optional) convert your PhysBones to DynamicBones by [PhysBone-to-DynamicBone](https://github.com/FACS01-01/PhysBone-to-DynamicBone) etc.
+2. (optional) convert your PhysBones to DynamicBones or MagicaCloth2 by [PhysBone-to-DynamicBone](https://github.com/FACS01-01/PhysBone-to-DynamicBone) or [physbone2magica2](https://github.com/Narazaka/physbone2magica2).
 3. Import the [ChilloutVR CCK](https://docs.abinteractive.net/cck/setup/) to that VRChat avatar project. (Don't worry about unity version mismatch)
 4. Import the vrc3cvr `.unitypackage`
 5. Click **Tools** -> VRC3CVR
 6. Select the VRC avatar you want to convert
    - If you are using Modular Avatar or something non-destractive avatar build tool, try to "bake" avatar first (e.g. Tools -> Modular Avatar -> Manual bake avatar)
-7. Click Convert
+7. (optional) enable **Convert PhysBones to MagicaCloth2** if you have [physbone2magica2](https://github.com/Narazaka/physbone2magica2) installed
+8. Click Convert
 
-Want to convert your PhysBones to DynamicBones? Use these tools:
+Want to convert your PhysBones before conversion? Use these tools:
 
-- https://github.com/FACS01-01/PhysBone-to-DynamicBone
+- DynamicBone: https://github.com/FACS01-01/PhysBone-to-DynamicBone
+- MagicaCloth2: https://github.com/Narazaka/physbone2magica2
 
 You don't need to buy DynamicBones! Use this instead: https://github.com/Markcreator/VRChat-Tools or https://github.com/VRLabs/Dynamic-Bones-Stub
 
@@ -80,6 +82,7 @@ Install [Export Package (Advanced)](https://github.com/Narazaka/ExportPackageAdv
 - Convert VRC Contact Senders and Receivers to CVR ContactSender and ContactReceiver
   - Adds ContactAnimator for converted receivers to drive animator parameters.
   - Changing Shape Type in game is not supported.
+- optionally run PhysBone -> MagicaCloth2 conversion during avatar conversion (requires physbone2magica2 package)
 
 ## Mapping gestures
 
